@@ -6,7 +6,7 @@
 #include "debug.h"
 #include "vm.h"
 
-static void repl(VM* vm) {
+void repl(VM* vm) {
     char* line = malloc(1024*sizeof(char));
     for (;;) {
         printf("> ");
@@ -19,7 +19,7 @@ static void repl(VM* vm) {
     free(line);
 }
 
-static char* readFile(const char* path) {
+char* readFile(const char* path) {
     FILE* file = fopen(path, "rb");
     if (file == NULL) {
         fprintf(stderr, "Could not open file %s.\n", path);
@@ -42,7 +42,7 @@ static char* readFile(const char* path) {
     return buffer;
 }
 
-static void runFile(VM* vm, const char* path) {
+void runFile(VM* vm, const char* path) {
     char* source = readFile(path);
     InterpretResult result = interpret(vm, source);
     free(source);

@@ -25,13 +25,7 @@ enum InterpretResult_ {
 };
 typedef enum InterpretResult_ InterpretResult;
 
-VM* initVM();
-void freeVM(VM* vm);
-InterpretResult interpret(VM* vm, const char* source);
-void push(VM* vm, Value value);
-Value pop(VM* vm);
-
-static void resetStack(VM* vm) {
+void resetStack(VM* vm) {
     vm->stackTop = vm->stack;
 }
 
@@ -47,7 +41,17 @@ void freeVM(VM* vm) {
     free(vm);
 }
 
-static InterpretResult run(VM* vm) {
+void push(VM* vm, Value value) {
+    *vm->stackTop = value;
+    vm->stackTop++;
+}
+
+Value pop(VM* vm) {
+    vm->stackTop--;
+    return *vm->stackTop;
+}
+
+InterpretResult run(VM* vm) {
     #define READ_BYTE() (*vm->ip++)
     #define READ_CONSTANT() (vm->chunk->constants->values[READ_BYTE()])
     #define BINARY_OP(op) \
@@ -95,18 +99,18 @@ static InterpretResult run(VM* vm) {
     
 
 InterpretResult interpret(VM* vm, const char* source) {
-    compile(source);
-    return INTERPRET_OK;
-}
-
-void push(VM* vm, Value value) {
-    *vm->stackTop = value;
-    vm->stackTop++;
-}
-
-Value pop(VM* vm) {
-    vm->stackTop--;
-    return *vm->stackTop;
+    Chunk* chunk = initChunk();
+    if (!compile(source, chunk)) {
+        freeChunk(chunk);
+        return INTERPRET_COMPILE_ERROR;
+    }
+    vm->chunk = chunk;
+    vm->ip = vm->chunk->code;
+    
+    InterpretResult result = run(vm);
+    
+    freeChunk(chunk);
+    return result;
 }
 
 #endif
